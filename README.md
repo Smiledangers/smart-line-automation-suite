@@ -14,6 +14,25 @@
 ## 🛠️ 技術棧
 
 - **後端框架**：FastAPI (Python 3.10+)
+
+## 🌟 技術特色 (Production-Grade 增強)
+
+- **服務層重構**：將每個服務拆分為單一責任的微服務（例如 LineMessageService、LineProfileService），透過依賴注入實現鬆耦合與易測試。
+- **異步資料庫會話管理**：採用 `async context manager` + `AsyncSession`，`get_db` 依賴註冊 `expire_on_commit=False` 並確保正確清理。
+- **AI/LangGraph 層強化**：所有 LLM 呼叫加入指數退避重試裝飾器（最多 3 次）；提示詞使用 Pydantic 模型進行運行時驗證；重度圖表執行封裝為 Celery 任務，避免在請求週期內同步執行。
+- **Celery Task 層強化**：每個任務加入 `autoretry_for=(Exception,)`，`retry_kwargs={'max_retries': 5, 'countdown': 60}`；任務僅傳遞 primitive data（ID 或 dict），避免傳遞 SQLAlchemy 模型；加入 `soft_time_limit` 與 `time_limit` 防止任務卡死。
+- **爬蟲/Botasaurus 管線優化**：建立 Spider Factory，使用策略模式抽取選擇器 logic；Pipeline 加入 URL + 內容 hash 去重複；爬蟲改用 worker pool + Redis queue 支援平行執行。
+- **測試層提升**：整合測試使用 docker-compose test overlay（測試 DB + Redis）；加入 hypothesis property-based testing；配置 pytest-xdist 讓測試可平行執行。
+- **其他 production 必備強化**：全域結構化日誌 + request-id 透播；API 端點加入速率限制 middleware；所有外部呼叫（LINE、LLM、爬蟲）包裝 timeout + circuit breaker；`pyproject.toml` 的依賴細分為 main / dev / test / scraper 四組。
+
+## 🚀 未來擴展性
+
+- **插件架構**：服務層透過介面與依賴注入設計，未來可輕鬆插入新功能模組（如 pagamento、通知）。
+- **事件驅動**：可進一步採用事件流平台（如 Apache Kafka）解耦爬蟲、AI 與通知流程。
+- **微服務拆分**：現有結構已具備服務層拆分基礎，未來可將每個服務部署為獨立容器，以達到更細微的縮放。
+- **進階監控**：整合 OpenTelemetry、Prometheus 指標與追蹤，實現端到端可觀測性。
+- **安全強化**：引入 OIDC、OAuth2.0、JWT 轉譯與金鑰輪換機制。
+- **多語言與地區化**：支援 i18n，擴充至多國語言與地區合規。
 - **資料庫**：PostgreSQL + SQLAlchemy 2.0
 - **快取隊列**：Redis + Celery
 - **AI/ML**：LangChain + LangGraph + OpenAI GPT-4
