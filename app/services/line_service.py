@@ -6,6 +6,7 @@ import logging
 
 from app.models.line_user import LINEUser
 from app.schemas.line import LINEUserCreate, LINEUserUpdate
+from app.utils.circuit_breaker import line_api_circuit_breaker
 
 logger = logging.getLogger(__name__)
 
@@ -57,6 +58,7 @@ class LineUserService:
 class LineMessageService:
     """Service for LINE messaging operations."""
     
+    @line_api_circuit_breaker(fallback_func=lambda to, text: False)
     def send_text_message(self, to: str, text: str) -> bool:
         """Send text message via LINE Bot API."""
         # Implementation would go here
@@ -64,6 +66,7 @@ class LineMessageService:
         logger.info(f"Sending text message to {to}: {text}")
         return True
     
+    @line_api_circuit_breaker(fallback_func=lambda to, flex_content: False)
     def send_flex_message(self, to: str, flex_content: dict) -> bool:
         """Send flex message via LINE Bot API."""
         # Implementation would go here
