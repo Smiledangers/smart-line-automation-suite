@@ -1,120 +1,108 @@
-"""
-Application configuration module.
-"""
-from pydantic import AnyHttpUrl, BaseSettings, PostgresDsn, validator
-from pydantic.networks import EmailStr
-from typing import List, Optional, Union
+"""Application configuration using pydantic-settings."""
+from functools import lru_cache
+from typing import List, Optional
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    PROJECT_NAME: str = "Smart LINE Bot + Dashboard + Scraper Pipeline"
-    API_V1_STR: str = "/api/v1"
-    BACKEND_CORS_ORIGINS: List[AnyHttpUrl] = []
+    """Application settings loaded from environment variables."""
 
-    # Server
-    SERVER_HOST: str = "0.0.0.0"
-    SERVER_PORT: int = 8000
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore",
+    )
+
+    # Application
+    PROJECT_NAME: str = "Smart LINE Bot + Dashboard + Scraper Pipeline"
+    VERSION: str = "1.0.0"
+    ENVIRONMENT: str = "development"
+    DEBUG: bool = True
+    API_V1_STR: str = "/api/v1"
+    BACKEND_CORS_ORIGINS: List[str] = Field(default=["http://localhost:3000", "http://localhost:8000"])
+    LOG_LEVEL: str = "INFO"
 
     # Security
-    SECRET_KEY: str = "changethis-in-production"
+    SECRET_KEY: str = "change-me-in-production"
+    ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
     REFRESH_TOKEN_EXPIRE_DAYS: int = 30
-    ALGORITHM: str = "HS256"
 
     # Database
-    POSTGRES_SERVER: str = "localhost"
+    DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@db:5432/demo_project"
+    DATABASE_URL_SYNC: str = "postgresql://postgres:postgres@db:5432/demo_project"
+    POSTGRES_SERVER: str = "db"
     POSTGRES_USER: str = "postgres"
     POSTGRES_PASSWORD: str = "postgres"
     POSTGRES_DB: str = "demo_project"
     POSTGRES_PORT: int = 5432
-    DATABASE_URL: Optional[PostgresDsn] = None
-
-    @validator("DATABASE_URL", pre=True)
-    def assemble_db_connection(cls, v: Optional[str], values: dict) -> Any:
-        if isinstance(v, str):
-            return v
-        return PostgresDsn.build(
-            scheme="postgresql",
-            user=values.get("POSTGRES_USER"),
-            password=values.get("POSTGRES_PASSWORD"),
-            host=values.get("POSTGRES_SERVER"),
-            port=str(values.get("POSTGRES_PORT")),
-            path=f"/{values.get('POSTGRES_DB') or ''}",
-        )
 
     # Redis
-    REDIS_HOST: str = "localhost"
+    REDIS_HOST: str = "redis"
     REDIS_PORT: int = 6379
     REDIS_PASSWORD: Optional[str] = None
-    REDIS_URL: Optional[AnyHttpUrl] = None
+    REDIS_URL: str = "redis://redis:6379/0"
 
-    @validator("REDIS_URL", pre=True)
-    def assemble_redis_connection(cls, v: Optional[str], values: dict) -> Any:
-        if isinstance(v, str):
-            return v
-        return AnyHttpUrl.build(
-            scheme="redis",
-            host=values.get("REDIS_HOST"),
-            port=str(values.get("REDIS_PORT")),
-            password=values.get("REDIS_PASSWORD"),
-        )
+    # Celery
+    CELERY_BROKER_URL: str = "redis://redis:6379/0"
+    CELERY_RESULT_BACKEND: str = "redis://redis:6379/0"
+    CELERY_TASK_SERIALIZER: str = "json"
+    CELERY_RESULT_SERIALIZER: str = "json"
+    CELERY_ACCEPT_CONTENT: List[str] = ["json"]
+    CELERY_TIMEZONE: str = "UTC"
+    CELERY_ENABLE_UTC: bool = True
 
     # LINE Bot
-    LINE_CHANNEL_ACCESS_TOKEN: str = ""
-    LINE_CHANNEL_SECRET: str = ""
+    LINE_CHANNEL_ACCESS_TOKEN: str = "your-line-channel-access-token"
+    LINE_CHANNEL_SECRET: str = "your-line-channel-secret"
     LINE_REDIRECT_URI: str = "http://localhost:8000/api/v1/line/callback"
 
     # AI / LLM
-    OPENAI_API_KEY: Optional[str] = None
-    # For local models
+    OPENAI_API_KEY: str = "your-openai-api-key"
+    OPENAI_MODEL: str = "gpt-4"
+    OPENAI_TEMPERATURE: float = 0.7
+    OPENAI_MAX_TOKENS: int = 2048
     LOCAL_LLM_MODEL_PATH: Optional[str] = None
     LOCAL_LLM_TYPE: Optional[str] = None
+
+    # Scraping
+    USER_AGENT: str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+    REQUEST_DELAY: int = 1
+    MAX_RETRIES: int = 3
+    SCRAPING_CONCURRENCY: int = 5
 
     # Email
     SMTP_TLS: bool = True
     SMTP_PORT: int = 587
-    SMTP_HOST: Optional[str] = None
-    SMTP_USER: Optional[EmailStr] = None
-    SMTP_PASSWORD: Optional[str] = None
-    EMAILS_FROM_EMAIL: Optional[EmailStr] = None
-    EMAILS_TO_EMAIL: Optional[List[EmailStr]] = []
+    SMTP_HOST: str = "smtp.gmail.com"
+    SMTP_USER: str = "your-email@gmail.com"
+    SMTP_PASSWORD: str = "your-app-password"
+    EMAILS_FROM_EMAIL: str = "your-email@gmail.com"
+    EMAILS_FROM_NAME: str = "Smart LINE Bot"
 
     # Superuser
-    FIRST_SUPERUSER: EmailStr
-    FIRST_SUPERUSER_PASSWORD: str
+    FIRST_SUPERUSER: str = "admin@example.com"
+    FIRST_SUPERUSER_PASSWORD: str = "changeme"
+
+    # Rate Limiting
+    RATE_LIMIT_PER_MINUTE: int = 60
+
+    # Circuit Breaker
+    CIRCUIT_BREAKER_FAILURE_THRESHOLD: int = 5
+    CIRCUIT_BREAKER_RECOVERY_TIMEOUT: int = 60
+    CIRCUIT_BREAKER_EXCLUDED_STATUS_CODES: List[int] = [500, 502, 503, 504]
 
     # Monitoring
-    SENTRY_DSN: Optional[AnyHttpUrl] = None
+    SENTRY_DNS: Optional[str] = None
     PROMETHEUS_PORT: int = 9090
 
-    # Scraping
-    USER_AGENT: str = (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-        "(KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-    )
-    REQUEST_DELAY: float = 1.0
-    MAX_RETRIES: int = 3
 
-    # Celery
-    CELERY_BROKER_URL: Optional[str] = None
-    CELERY_RESULT_BACKEND: Optional[str] = None
-
-    @validator("CELERY_BROKER_URL", "CELERY_RESULT_BACKEND", pre=True)
-    def assemble_celery_url(cls, v: Optional[str], values: dict) -> Any:
-        if isinstance(v, str):
-            return v
-        return f"redis://{values.get('REDIS_HOST')}:{values.get('REDIS_PORT')}/0"
-
-    # Environment
-    ENVIRONMENT: str = "local"
-    DEBUG: bool = False
-
-    # Testing
-    TESTING: bool = False
-
-    class Config:
-        case_sensitive = True
-        env_file = ".env"
+@lru_cache
+def get_settings() -> Settings:
+    """Return cached settings instance."""
+    return Settings()
 
 
-settings = Settings()
+settings = get_settings()

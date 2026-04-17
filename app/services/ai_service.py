@@ -1,161 +1,183 @@
-"""
-AI service layer for LangGraph integration with async support.
-"""
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-from typing import List, Optional, Dict, Any
-from datetime import datetime
-import json
+"""AI service layer for LangGraph integration with async support."""
+import asyncio
 import logging
+import uuid
+from datetime import datetime
+from typing import Dict, List, Optional, Any
+from openai import AsyncOpenAI
 
-from app.models.ai_conversation import AIConversation
-from app.schemas.ai import ChatRequest, ChatResponse, ConversationResponse
-from app.ai.agents.line_agent import line_agent
-from app.ai.graphs.conversation_graph import conversation_graph
+from app.core.config import get_settings
 
+settings = get_settings()
+
+# Configure structured logging
 logger = logging.getLogger(__name__)
 
+# In-memory storage (replace with proper database in production)
+_conversation_store: Dict[str, Dict] = {}
+_message_store: Dict[str, List[Dict]] = {}
+
+
 class ConversationManagementService:
-    """Service for AI conversation management."""
-    
-    async def create_conversation(self, db: AsyncSession, user_id: int, title: str = None) -> AIConversation:
-        """Create a new AI conversation."""
-        if not title:
-            title = f"對話 {datetime.utcnow().strftime('%Y-%m-%d %H:%M')}"
-        
-        db_conversation = AIConversation(
-            user_id=user_id,
-            title=title,
-            message_history=[]
-        )
-        db.add(db_conversation)
-        await db.commit()
-        await db.refresh(db_conversation)
-        return db_conversation
+    """Service for managing conversations."""
 
-    async def get_conversation(self, db: AsyncSession, conversation_id: int) -> Optional[AIConversation]:
-        """Get a specific conversation by ID."""
-        result = await db.execute(select(AIConversation).filter(AIConversation.id == conversation_id))
-        return result.scalar_one_or_none()
+    def __init__(self):
+        self.openai_client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+        logger.info("ConversationManagementService initialized")
 
-    async def get_user_conversations(self, db: AsyncSession, user_id: int, limit: int = 50) -> List[AIConversation]:
-        """Get conversations for a user."""
-        result = await db.execute(
-            select(AIConversation)
-            .filter(AIConversation.user_id == user_id)
-            .order_by(AIConversation.updated_at.desc())
-            .limit(limit)
-        )
-        return result.scalars().all()
+    async def create_conversation(self, user_id: str, title: Optional[str] = None) -> Dict[str, Any]:
+        """Create a new conversation for a user."""
+        try:
+            conversation_id = str(uuid.uuid4())
+            now = datetime.utcnow().isoformat()
+
+            conversation = {
+                "id": conversation_id,
+                "user_id": user_id,
+                "title": title or f"Conversation {now}",
+                "created_at": now,
+                "updated_at": now,
+                "is_active": True,
+            }
+
+            _conversation_store[conversation_id] = conversation
+            _message_store[conversation_id] = []
+
+            logger.info(f"Conversation created: {conversation_id}")
+            return conversation
+        except Exception as e:
+            logger.error(f"Failed to create conversation: {e}")
+            raise
+
+    async def get_conversation(self, conversation_id: str) -> Optional[Dict[str, Any]]:
+        """Retrieve a conversation by ID."""
+        return _conversation_store.get(conversation_id)
+
+    async def get_user_conversations(self, user_id: str, limit: int = 50, offset: int = 0) -> List[Dict[str, Any]]:
+        """Retrieve conversations for a specific user."""
+        user_conversations = [
+            conv for conv in _conversation_store.values()
+            if conv["user_id"] == user_id and conv["is_active"]
+        ]
+        user_conversations.sort(key=lambda x: x["updated_at"], reverse=True)
+        return user_conversations[offset : offset + limit]
+
 
 class ChatProcessingService:
-    """Service for processing AI chat messages."""
-    
-    async def chat(self, db: AsyncSession, chat_request: ChatRequest, user_id: int) -> ChatResponse:
-        """Process a chat message using AI agent."""
-        # Get or create conversation
-        conversation = None
-        if chat_request.conversation_id:
-            conversation = await self.get_conversation(db, chat_request.conversation_id)
-            if not conversation or conversation.user_id != user_id:
-                raise ValueError("Conversation not found or access denied")
-        else:
-            conversation = await ConversationManagementService().create_conversation(db, user_id)
-        
-        # Add user message to history
-        user_message = {
-            "role": "user",
-            "content": chat_request.message,
-            "timestamp": datetime.utcnow().isoformat()
-        }
-        
-        # Process with AI agent
+    """Service for processing chat messages using LangGraph agents."""
+
+    def __init__(self):
+        self.openai_client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+        self._initialize_agent()
+        logger.info("ChatProcessingService initialized")
+
+    def _initialize_agent(self):
+        """Placeholder for LangGraph agent initialization."""
+        logger.info("LangGraph agent initialization placeholder")
+
+    async def chat(
+        self, conversation_id: str, user_message: str, user_id: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Process a user message and generate a response using LangGraph agents."""
         try:
-            ai_response = await line_agent.process_message(
-                message=chat_request.message,
-                conversation_history=conversation.message_history or [],
-                user_context={"user_id": user_id}
-            )
-            
-            # Add AI response to history
-            ai_message = {
-                "role": "assistant",
-                "content": ai_response["response"],
+            conversation = await ConversationManagementService().get_conversation(conversation_id)
+            if not conversation:
+                raise ValueError(f"Conversation {conversation_id} not found")
+
+            if user_id and conversation["user_id"] != user_id:
+                raise ValueError("Unauthorized access to conversation")
+
+            # Add user message to history
+            user_msg = {
+                "id": str(uuid.uuid4()),
+                "role": "user",
+                "content": user_message,
                 "timestamp": datetime.utcnow().isoformat(),
-                "metadata": ai_response.get("metadata", {})
             }
-            
-            # Update conversation
-            conversation.message_history = (conversation.message_history or []) + [user_message, ai_message]
-            conversation.updated_at = datetime.utcnow()
-            
-            await db.commit()
-            await db.refresh(conversation)
-            
-            return ChatResponse(
-                response=ai_response["response"],
-                conversation_id=conversation.id,
-                message_id=len(conversation.message_history) - 1,
-                metadata=ai_response.get("metadata", {})
-            )
-        except Exception as e:
-            logger.error(f"AI processing error: {e}")
-            # Return error message
-            error_message = "抱歉，我在處理您的訊息時遇到了一些問題。請稍後再試。"
-            
-            ai_message = {
-                "role": "assistant",
-                "content": error_message,
-                "timestamp": datetime.utcnow().isoformat()
-            }
-            
-            conversation.message_history = (conversation.message_history or []) + [user_message, ai_message]
-            conversation.updated_at = datetime.utcnow()
-            
-            await db.commit()
-            await db.refresh(conversation)
-            
-            return ChatResponse(
-                response=error_message,
-                conversation_id=conversation.id,
-                message_id=len(conversation.message_history) - 1
+            _message_store[conversation_id].append(user_msg)
+
+            # Use OpenAI as placeholder (replace with LangGraph agent)
+            response = await self.openai_client.chat.completions.create(
+                model=settings.OPENAI_MODEL,
+                messages=[
+                    {"role": "system", "content": "You are a helpful assistant."},
+                    *[
+                        {"role": msg["role"], "content": msg["content"]}
+                        for msg in _message_store[conversation_id]
+                    ],
+                ],
+                temperature=settings.OPENAI_TEMPERATURE,
+                max_tokens=settings.OPENAI_MAX_TOKENS,
             )
 
-    async def get_conversation(self, db: AsyncSession, conversation_id: int) -> Optional[AIConversation]:
-        """Get a specific conversation by ID."""
-        result = await db.execute(select(AIConversation).filter(AIConversation.id == conversation_id))
-        return result.scalar_one_or_none()
+            assistant_message = response.choices[0].message.content
+
+            # Add assistant message to history
+            assistant_msg = {
+                "id": str(uuid.uuid4()),
+                "role": "assistant",
+                "content": assistant_message,
+                "timestamp": datetime.utcnow().isoformat(),
+            }
+            _message_store[conversation_id].append(assistant_msg)
+
+            # Update conversation timestamp
+            conversation["updated_at"] = datetime.utcnow().isoformat()
+            _conversation_store[conversation_id] = conversation
+
+            return {
+                "message": assistant_message,
+                "conversation_id": conversation_id,
+                "message_id": assistant_msg["id"],
+            }
+        except ValueError:
+            raise
+        except Exception as e:
+            logger.error(f"Error processing chat: {e}")
+            raise
+
 
 class ConversationHistoryService:
-    """Service for getting conversation history."""
-    
-    def get_conversation_history(self, conversation: AIConversation) -> List[Dict]:
-        """Get conversation history."""
-        if not conversation:
-            return []
-        return conversation.message_history or []
+    """Service for retrieving conversation history."""
 
-# Main AI service that aggregates sub-services (for backward compatibility)
+    def __init__(self):
+        logger.info("ConversationHistoryService initialized")
+
+    async def get_conversation_history(
+        self, conversation_id: str, limit: int = 100, offset: int = 0
+    ) -> List[Dict[str, Any]]:
+        """Retrieve message history for a conversation."""
+        if conversation_id not in _conversation_store:
+            raise ValueError(f"Conversation {conversation_id} not found")
+
+        messages = _message_store.get(conversation_id, [])
+        return messages[offset : offset + limit]
+
+
 class AIService:
+    """Main AI service that aggregates sub-services."""
+
     def __init__(self):
         self.conversation_service = ConversationManagementService()
         self.chat_service = ChatProcessingService()
         self.history_service = ConversationHistoryService()
-    
-    # Delegate methods for backward compatibility
-    async def create_conversation(self, db: AsyncSession, user_id: int, title: str = None) -> AIConversation:
-        return await self.conversation_service.create_conversation(db, user_id, title)
-    
-    async def get_conversation(self, db: AsyncSession, conversation_id: int) -> Optional[AIConversation]:
-        return await self.conversation_service.get_conversation(db, conversation_id)
-    
-    async def get_user_conversations(self, db: AsyncSession, user_id: int, limit: int = 50) -> List[AIConversation]:
-        return await self.conversation_service.get_user_conversations(db, user_id, limit)
-    
-    async def chat(self, db: AsyncSession, chat_request: ChatRequest, user_id: int) -> ChatResponse:
-        return await self.chat_service.chat(db, chat_request, user_id)
-    
-    def get_conversation_history(self, conversation: AIConversation) -> List[Dict]:
-        return self.history_service.get_conversation_history(conversation)
+
+    async def create_conversation(self, user_id: str, title: Optional[str] = None) -> Dict[str, Any]:
+        return await self.conversation_service.create_conversation(user_id, title)
+
+    async def get_conversation(self, conversation_id: str) -> Optional[Dict[str, Any]]:
+        return await self.conversation_service.get_conversation(conversation_id)
+
+    async def get_user_conversations(self, user_id: str, limit: int = 50) -> List[Dict[str, Any]]:
+        return await self.conversation_service.get_user_conversations(user_id, limit)
+
+    async def chat(self, conversation_id: str, user_message: str, user_id: Optional[str] = None) -> Dict[str, Any]:
+        return await self.chat_service.chat(conversation_id, user_message, user_id)
+
+    async def get_conversation_history(
+        self, conversation_id: str, limit: int = 100, offset: int = 0
+    ) -> List[Dict[str, Any]]:
+        return await self.history_service.get_conversation_history(conversation_id, limit, offset)
+
 
 ai_service = AIService()
