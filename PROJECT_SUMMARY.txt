@@ -1,0 +1,274 @@
+# 智慧型 LINE Bot + 後台 Dashboard + 自動化爬蟲管線 Demo 專案
+# 完整專案結組與說明
+
+本專案是一個使用現代 Python 技術棧建置的生產級全棧應用程式，包含：
+- LINE Bot 互動
+- 後台管理 Dashboard
+- 自動化爬蟲管線
+- AI 代理整合 (LangGraph)
+- Docker Compose & Kubernetes 部署
+- GitHub Actions CI/CD
+- 完整測試框架
+
+## 專案結構
+demo_project/
+├── app/                    # 主應用程式
+│   ├── api/                # API 路由
+│   │   └── v1/
+│   │       ├── endpoints/  # API 端點
+│   │       │   ├── line.py         # LINE Bot webhook
+│   │       │   ├── dashboard.py    # 後台管理 API
+│   │       │   ├── scraping.py     # 爬蟲管理 API
+│   │       │   └── ai.py           # AI 代理 API
+│   │       ├── deps.py             # 依賴注入
+│   │       └── router.py           # API 路由匯總
+│   ├── core/               # 核心配置
+│   │   ├── config.py       # 應用程式配置 (Pydantic Settings)
+│   │   ├── database.py     # 資料庫連線
+│   │   └── security.py     # 安全工具 (JWT, 密碼雜湊)
+│   ├── models/             # SQLAlchemy 模型
+│   │   ├── base.py         # 基礎模型類
+│   │   ├── user.py         # 使用者模型
+│   │   ├── line_user.py    # LINE 使用者模型
+│   │   ├── scraping_job.py # 爬蟲工作模型
+│   │   ├── scraping_result.py # 爬蟲結果模型
+│   │   └── ai_conversation.py # AI 對話模型
+│   ├── schemas/            # Pydantic 模式
+│   │   ├── line.py         # LINE 相關模式
+│   │   ├── dashboard.py    # Dashboard 相關模式
+│   │   ├── scraping.py     # 爬蟲相關模式
+│   │   └── ai.py           # AI 相關模式
+│   ├── services/           # 業務邏輯服務
+│   │   ├── line_service.py     # LINE Bot 業務邏輯
+│   │   ├── dashboard_service.py # Dashboard 業務邏輯
+│   │   ├── scraping_service.py # 爬蟲管線 業務邏輯
+│   │   └── ai_service.py       # AI 代理 業務邏輯
+│   ├── tasks/              # Celery 任務
+│   │   ├── scraping_tasks.py   # 爬蟲排程任務
+│   │   ├── ai_tasks.py         # AI 處理任務
+│   │   └── notification_tasks.py # 通知任務 (LINE, Email)
+│   ├── utils/              # 工具函式
+│   │   ├── line_utils.py       # LINE 工具
+│   │   ├── scraping_utils.py   # 爬蟲工具
+│   │   └── ai_utils.py         # AI 工具
+│   └── main.py             # FastAPI 應用程式入口點
+├── scraper/                # 專用爬蟲模組 (可選)
+│   ├── spiders/            # 爬蟲蜘蛛
+│   │   ├── __init__.py
+│   │   └── base_spider.py
+│   ├── pipelines/          # 爬蟲管線
+│   │   ├── __init__.py
+│   │   └── validation_pipeline.py
+│   ├── middlewares/        # 爬蟲中介軟體
+│   │   └── retry_middleware.py
+│   └── settings.py         # 爬蟲設定
+├── ai/                     # AI/LangGraph 元件
+│   ├── agents/             # LangGraph 代理
+│   │   ├── line_agent.py
+│   │   └── scraping_agent.py
+│   ├── graphs/             # 對話圖譜
+│   │   ├── conversation_graph.py
+│   │   └── decision_graph.py
+│   ├── tools/              # 自訂工具
+│   │   ├── line_tools.py
+│   │   └── scraping_tools.py
+│   └── prompts/            # 提示詞模板
+│       ├── line_prompts.yaml
+│       └── scraping_prompts.yaml
+├── tests/                  # 測試套件
+│   ├── unit/               # 單元測試
+│   │   ├── test_line_service.py
+│   │   ├── test_dashboard_service.py
+│   │   ├── test_scraping_service.py
+│   │   └── test_ai_service.py
+│   ├── integration/        # 整合測試
+│   │   ├── test_line_endpoints.py
+│   │   ├── test_dashboard_endpoints.py
+│   │   ├── test_scraping_endpoints.py
+│   │   └── test_ai_endpoints.py
+│   ├── conftest.py         # Pytest 配置
+│   └── pytest.ini          # Pytest 設定
+├── deploy/                 # 部署配置
+│   ├── docker/             # Docker 相關
+│   │   ├── Dockerfile      # 多階段 Docker 建置
+│   │   ├── docker-compose.yml      # 開發環境
+│   │   └── docker-compose.prod.yml # 生產環境
+│   ├── k8s/                # Kubernetes manifests
+│   │   ├── deployment.yaml   # 應用程式部署
+│   │   ├── service.yaml      # 內部服務
+│   │   ├── ingress.yaml      # 外部存取 (Ingress)
+│   │   ├── hpa.yaml          # 水平 Pod 自動擴縮
+│   │   └── configmap.yaml    # 配置映射
+│   ├── helm/               # Helm 圖表 (可選)
+│   │   └── demo-bot/
+│   │       ├── Chart.yaml
+│   │       ├── values.yaml
+│   │       └── templates/
+│   │           ├── deployment.yaml
+│   │           ├── service.yaml
+│   │           └── ingress.yaml
+│   └── cloud/              # 雲端部署選項
+│       ├── render.yaml     # Render.com 部署
+│   │   └── railway.json    # Railway.app 部署
+├── alembic/                # 資料庫遷移
+│   ├── env.py
+│   ├── script.py.mako
+│   └── versions/
+│       ├── 001_initial_schema.py           # 初始結構 (users, line_users)
+│       ├── 002_add_scraping_tables.py      # 爬蟲工作與結果表
+│       ├── 003_add_ai_tables.py            # AI 對話表
+│   │   └── 004_add_ai_tables.py            # (實際上與 003 重複，應為其他遷移，此處保留)
+├── requirements/           # 依賴檔案
+│   ├── base.txt            # 核心依賴
+│   ├── dev.txt             # 開發依賴
+│   └── prod.txt            # 生產依賴
+├── scripts/                # 輔助腳本
+│   ├── create_superuser.py # 建立管理員使用者
+│   ├── init_db.py          # 初始化資料庫
+│   ├── scrape_sample.py    # 範例爬蟲腳本
+│   └── test_line_bot.py    # 測試 LINE Bot 連線
+├── docs/                   # 說明文件
+│   ├── api.md              # API 說明
+│   ├── deployment.md       # 部署指南
+│   └── architecture.md     # 架構決策
+├── .github/                # GitHub Actions CI/CD
+│   └── workflows/
+│       ├── ci.yml          # 持續整合 (測試、建置)
+│   │   └── cd.yml          # 持續部署 (部署到 staging/production)
+├── .env.example            # 環境變數範例
+├── .gitignore              # Git 忽略規則
+├── Dockerfile              # 容器定義 (與 deploy/docker/Dockerfile 重複，為方便)
+├── docker-compose.yml      # 服務編排 (與 deploy/docker/docker-compose.yml 重複，為方便)
+├── README.md               # 本檔案
+├── pyproject.toml          # 專案中繼資料與依賴
+├── Makefile                # 開發捷徑
+└── LICENSE                 # 授權檔案 (MIT)
+
+## 關鍵特色
+✅ 完全異步 FastAPI 後端
+✅ 使用 SQLAlchemy 2.0 和 Alembic 進行資料庫遷移
+✅ 使用 Celery + Redis 進行背景任務處理
+✅ 整合 LangGraph 進行智慧對話
+✅ 使用 Botasaurus 進行反偵測網路爬蟲
+✅ LINE Bot 整合（訊息處理、使用者管理）
+✅ 後台 Dashboard 管理介面（API）
+✅ Docker Compose 本地開發與生產部署
+✅ Kubernetes manifests 用於雲端部署
+✅ GitHub Actions CI/CD 用於自動測試、建置與部署
+✅ 完整單元與整合測試框架
+✅ 環境變數配置與 .env.example
+✅ 結構化日誌與錯誤處理
+✅ 安全最佳實踐（JWT、密碼雜湊、輸入驗證）
+
+## 快速開始
+### 先決條件
+- Docker 與 Docker Compose
+- Python 3.11+ (選擇用於本地開發 без Docker)
+- Node.js 16+ (如果使用前端框架，但本專案目前僅提供後端 API)
+
+### 使用 Docker Compose（推薦用於開發）
+```bash
+# 複製環境變數範例
+cp .env.example .env
+# 根據需要編輯 .env（特別是 LINE 和 AI 的金鑰）
+
+# 建置並啟動所有服務
+docker-compose up -d
+
+# 執行資料庫遷移
+docker-compose exec web alembic upgrade head
+
+# 建立第一個管理員使用者
+docker-compose exec web python scripts/create_superuser.py
+
+# 存取應用程式
+# API 文件: http://localhost:8000/docs
+# 替代文件: http://localhost:8000/redoc
+# 健康檢查: http://localhost:8000/health
+```
+
+### 使用 Kubernetes
+```bash
+# 應用所有 manifests
+kubectl apply -f deploy/k8s/
+
+# 或使用 Helm (如果已準備好圖表)
+# helm install demo-bot ./deploy/helm/demo-bot
+```
+
+### 本地開發（無 Docker）
+```bash
+# 建立虛擬環境
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+
+# 安裝依賴
+pip install -r requirements/base.txt
+pip install -r requirements/dev.txt  # 包含測試和開發工具
+
+# 複製環境變數
+cp .env.example .env
+# 編輯 .env
+
+# 初始化資料庫
+python scripts/init_db.py
+
+# 執行遷移
+alembic upgrade head
+
+# 建立管理員使用者
+python scripts/create_superuser.py
+
+# 启动应用
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+## 測試
+```bash
+# 執行所有測試
+pytest
+
+# 僅執行單元測試
+pytest tests/unit/
+
+# 僅執行整合測試
+pytest tests/integration/
+
+# 帶覆蓋率報告
+pytest --cov=app --cov-report=term-missing
+```
+
+## 部署選項
+本專案提供多種部署方式：
+
+1. **Docker Compose** - 適合開發、測試和小規模生產環境
+2. **Kubernetes** - 適合需要擴縮和高可用性的生產環境
+3. **Render.com** - 使用 deploy/render.yaml 透過 Render.com 部署
+4. **Railway.app** - 使用 deploy/railway.json 透過 Railway.app 部署
+5. **傳統 VPS** - 使用 Docker 或直接在伺服器上執行
+
+## 環境變數說明
+請參閱 `.env.example` 檔案以獲取所有必要的環境變數說明。重要的變數包括：
+
+- `DATABASE_URL`: PostgreSQL 連線字串
+- `REDIS_URL`: Redis 連線字串
+- `LINE_CHANNEL_ACCESS_TOKEN`: LINE Bot 通道存取權杖
+- `LINE_CHANNEL_SECRET`: LINE Bot 通道密鑰
+- `OPENAI_API_KEY`: OpenAI API 金鑰（用於 LangGraph）
+- `SECRET_KEY`: 用於 JWT 簽名的密鑰
+- `FIRST_SUPERUSER`: 首個管理員使用者的 Email
+- `FIRST_SUPERUSER_PASSWORD`: 首個管理員使用者的密碼
+
+## 注意事項
+1. 在生產環境中，請務必變更 `.env.example` 中的預設值，特別是 `SECRET_KEY`、`LINE_CHANNEL_ACCESS_TOKEN`、`LINE_CHANNEL_SECRET` 和 `OPENAI_API_KEY`。
+2. 對於 LINE Bot，您需要在 LINE Developers Console 中設定 Webhook URL 為 `https://your-domain.com/api/v1/line/webhook`。
+3. 對於 AI 功能，如果您沒有 OpenAI API 金鑰，您可以設定使用本地 LLM 模型（需修改 ai_service.py 和相關設定）。
+
+## 貢獻
+歡迎提交 Issue 和 Pull Request。請先閱讀 `CONTRIBUTING.md`（若存在）。
+
+## 授權
+本專案採用 MIT 授權 - 請參見 `LICENSE` 檔案。
+
+---
+*此專案由 AI 助理「小龍」為 Smile Dangerous 的自動化一人公司開發。*
