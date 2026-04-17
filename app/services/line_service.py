@@ -7,6 +7,10 @@ import logging
 from app.models.line_user import LINEUser
 from app.schemas.line import LINEUserCreate, LINEUserUpdate
 from app.utils.circuit_breaker import line_api_circuit_breaker
+from linebot import LineBotApi
+from linebot.exceptions import LineBotApiError
+from linebot.models import TextSendMessage, FlexSendMessage
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -58,20 +62,31 @@ class LineUserService:
 class LineMessageService:
     """Service for LINE messaging operations."""
     
+    def __init__(self):
+        self.line_bot_api = LineBotApi(settings.LINE_CHANNEL_ACCESS_TOKEN)
+        self.LineBotApiError = LineBotApiError
+    
     @line_api_circuit_breaker(fallback_func=lambda to, text: False)
     def send_text_message(self, to: str, text: str) -> bool:
-        """Send text message via LINE Bot API."""
-        # Implementation would go here
-        # For now, return True as placeholder
-        logger.info(f"Sending text message to {to}: {text}")
-        return True
+        """Send text message via LINE Bot API (push message)."""
+        try:
+            self.line_bot_api.push_message(to, TextSendMessage(text=text))
+            logger.info(f"Sent text message to {to}: {text}")
+            return True
+        except self.LineBotApiError as e:
+            logger.error(f"Failed to send text message to {to}: {e}")
+            return False
     
     @line_api_circuit_breaker(fallback_func=lambda to, flex_content: False)
     def send_flex_message(self, to: str, flex_content: dict) -> bool:
-        """Send flex message via LINE Bot API."""
-        # Implementation would go here
-        logger.info(f"Sending flex message to {to}")
-        return True
+        """Send flex message via LINE Bot API (push message)."""
+        try:
+            self.line_bot_api.push_message(to, FlexSendMessage(alt_text="Flex Message", contents=flex_content))
+            logger.info(f"Sent flex message to {to}")
+            return True
+        except self.LineBotApiError as e:
+            logger.error(f"Failed to send flex message to {to}: {e}")
+            return False
 
 class LineService:
     """Main LINE service that aggregates sub-services."""

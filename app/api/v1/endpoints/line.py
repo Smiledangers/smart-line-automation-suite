@@ -56,7 +56,7 @@ def handle_follow(event):
     # Get or create user in DB
     line_service.get_or_create_line_user(user_id, db)
     # Send welcome message
-    line_bot_api.reply_message(
+    line_service.message_service.reply_message(
         event.reply_token,
         TextSendMessage(text="您好！歡迎使用智慧 LINE Bot。我可以協助您查詢資訊、執行任務等等。"),
     )
@@ -80,7 +80,7 @@ def handle_message(event):
     background_tasks.add_task(process_line_message, user_id, message_text)
 
     # Optional: Send immediate acknowledgment
-    line_bot_api.reply_message(
+    line_service.message_service.reply_message(
         event.reply_token,
         TextSendMessage(text="我收到了您的訊息，正在處理中..."),
     )

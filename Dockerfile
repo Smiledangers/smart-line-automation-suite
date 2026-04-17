@@ -1,21 +1,26 @@
-# Dockerfile for demo_project
+# Dockerfile for smart-line-automation-suite
 FROM python:3.11-slim
 
 # Set environment variables
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=off \
+    PIP_DISABLE_PIP_VERSION_CHECK=on \
+    PIP_DEFAULT_TIMEOUT=100
 
 # Set work directory
 WORKDIR /app
 
 # Install system dependencies
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
+    gcc \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
-COPY requirements/base.txt .
-RUN pip install --no-cache-dir -r base.txt
+COPY pyproject.toml .
+RUN pip install --upgrade pip && \
+    pip install .[dev]
 
 # Copy project
 COPY . .
