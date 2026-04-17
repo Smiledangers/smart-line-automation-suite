@@ -1,0 +1,80 @@
+replicaCount: 2
+
+image:
+  repository: smart-line-bot
+  tag: latest
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8000
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+  hosts:
+    - host: your-domain.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: smart-line-bot-tls
+      hosts:
+        - your-domain.com
+
+resources:
+  web:
+    requests:
+      memory: "256Mi"
+      cpu: "250m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+  worker:
+    requests:
+      memory: "256Mi"
+      cpu: "250m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+  beat:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "200m"
+
+env:
+  DATABASE_URL: "postgresql://postgres:postgres@{{ .Release.Name }}-postgres:5432/demo_project"
+  REDIS_URL: "redis://{{ .Release.Name }}-redis:6379/0"
+  ENVIRONMENT: "production"
+  LOG_LEVEL: "INFO"
+
+persistence:
+  postgres:
+    enabled: true
+    size: 1Gi
+    storageClass: ""
+  redis:
+    enabled: true
+    size: 512Mi
+    storageClass: ""
+
+postgres:
+  enabled: true
+  image: postgres:15-alpine
+  postgresPassword: postgres
+  database: demo_project
+
+redis:
+  enabled: true
+  image: redis:7-alpine
+  password: ""
