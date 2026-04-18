@@ -12,6 +12,7 @@ from app.Models.ai_conversation import AIConversation
 from app.services.ai_service import ai_service
 
 logger = logging.getLogger(__name__)
+process_line_message = process_ai_message  # Alias for backwards compatibility
 
 # Initialize Celery
 celery_app = Celery(
