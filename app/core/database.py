@@ -18,6 +18,9 @@ AsyncSessionLocal = sessionmaker(
     engine, class_=AsyncSession, expire_on_commit=False, autocommit=False, autoflush=False
 )
 
+# Backwards compatibility alias
+SessionLocal = AsyncSessionLocal
+
 # Create Base class for models
 Base = declarative_base()
 
