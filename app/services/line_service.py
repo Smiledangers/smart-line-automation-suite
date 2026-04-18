@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete
 
 from app.Models.line_user import LINEUser
-from app.schemas.line import LINEUserCreate, LINEUserUpdate
+from app.schemas.line_user_user import LINEUserCreate, LINEUserUpdate
 from app.utils.circuit_breaker import line_api_circuit_breaker
 from linebot import LineBotApi
 from linebot.exceptions import LineBotApiError
