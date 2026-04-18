@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel, EmailStr
 
 from app.core.database import get_db
-from app.models.user import User
+from app.Models.user import User
 from app.services.dashboard_service import dashboard_service
 from app.core.security import get_current_active_superuser
 

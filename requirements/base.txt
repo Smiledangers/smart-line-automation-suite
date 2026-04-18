@@ -20,3 +20,5 @@ pypika==2.2.0
 sentry-sdk==2.20.0
 prometheus-client==0.21.0
 bcrypt==4.2.1
+line-bot-sdk
+asyncpg

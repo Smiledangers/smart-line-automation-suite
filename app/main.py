@@ -7,6 +7,7 @@ from fastapi.responses import JSONResponse
 import uvicorn
 from app.core.config import settings
 from app.middleware.security import RateLimitMiddleware, SecurityHeadersMiddleware
+from app.api.v1.router import api_router
 
 # Configure structured logging
 logging.basicConfig(
@@ -84,6 +85,9 @@ async def general_exception_handler(request: Request, exc: Exception):
         status_code=500,
         content={"detail": "Internal server error", "request_id": getattr(request.state, "request_id", None)},
     )
+
+# Register API routes
+app.include_router(api_router)
 
 # If running directly
 if __name__ == "__main__":

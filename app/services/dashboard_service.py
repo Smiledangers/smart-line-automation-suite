@@ -6,11 +6,11 @@ import logging
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 
-from app.models.user import User
-from app.models.line_user import LINEUser
-from app.models.scraping_job import ScrapingJob
-from app.models.scraping_result import ScrapingResult
-from app.models.ai_conversation import AIConversation, AIMessage
+from app.Models.user import User
+from app.Models.line_user import LINEUser
+from app.Models.scraping_job import ScrapingJob
+from app.Models.scraping_result import ScrapingResult
+from app.Models.ai_conversation import AIConversation, AIMessage
 
 logger = logging.getLogger(__name__)
 

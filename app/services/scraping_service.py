@@ -6,8 +6,8 @@ import logging
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 
-from app.models.scraping_job import ScrapingJob
-from app.models.scraping_result import ScrapingResult
+from app.Models.scraping_job import ScrapingJob
+from app.Models.scraping_result import ScrapingResult
 from app.schemas.scraping import ScrapingJobCreate, ScrapingJobUpdate
 
 logger = logging.getLogger(__name__)

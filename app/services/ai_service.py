@@ -8,7 +8,7 @@ from sqlalchemy import select, func, delete
 from openai import AsyncOpenAI
 
 from app.core.config import get_settings
-from app.models.ai_conversation import AIConversation, AIMessage
+from app.Models.ai_conversation import AIConversation, AIMessage
 from app.utils.circuit_breaker import circuit_breaker
 
 settings = get_settings()

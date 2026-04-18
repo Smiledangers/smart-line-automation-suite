@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel, Field
 
 from app.core.database import get_db
-from app.models.user import User
+from app.Models.user import User
 from app.schemas.ai import ChatRequest, ChatResponse, ConversationResponse, ConversationHistoryResponse
 from app.services.ai_service import ai_service
 from app.services.line_service import line_service

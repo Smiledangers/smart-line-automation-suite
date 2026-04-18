@@ -192,7 +192,7 @@ def cleanup_old_data(self) -> Dict[str, Any]:
     try:
         from datetime import datetime, timedelta
         from app.core.database import SessionLocal
-        from app.models.ai_conversation import AIMessage
+        from app.Models.ai_conversation import AIMessage
         
         db = SessionLocal()
         try:
@@ -216,7 +216,7 @@ def send_all_daily_digests(self) -> Dict[str, Any]:
     
     try:
         from app.core.database import SessionLocal
-        from app.models.user import User
+        from app.Models.user import User
         from app.tasks.notification_tasks import send_daily_digest
         
         db = SessionLocal()
@@ -291,9 +291,9 @@ def generate_monthly_report(self) -> Dict[str, Any]:
     try:
         from datetime import datetime, timedelta
         from app.core.database import SessionLocal
-        from app.models.user import User
-        from app.models.scraping_job import ScrapingJob
-        from app.models.ai_conversation import AIConversation
+        from app.Models.user import User
+        from app.Models.scraping_job import ScrapingJob
+        from app.Models.ai_conversation import AIConversation
         
         db = SessionLocal()
         try:

@@ -8,7 +8,7 @@ from datetime import datetime
 
 from app.core.config import settings
 from app.core.database import SessionLocal
-from app.models.ai_conversation import AIConversation
+from app.Models.ai_conversation import AIConversation
 from app.services.ai_service import ai_service
 
 logger = logging.getLogger(__name__)

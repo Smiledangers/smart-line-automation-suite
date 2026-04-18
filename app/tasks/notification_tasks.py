@@ -8,8 +8,8 @@ from datetime import datetime
 
 from app.core.config import settings
 from app.core.database import SessionLocal
-from app.models.user import User
-from app.models.line_user import LINEUser
+from app.Models.user import User
+from app.Models.line_user import LINEUser
 from app.services.line_service import line_service
 
 logger = logging.getLogger(__name__)
@@ -55,7 +55,7 @@ def notify_job_completion(job_id: int) -> Dict[str, Any]:
     """Notify when a scraping job is completed."""
     db = SessionLocal()
     try:
-        from app.models.scraping_job import ScrapingJob
+        from app.Models.scraping_job import ScrapingJob
         job = db.query(ScrapingJob).filter(ScrapingJob.id == job_id).first()
         if not job:
             return {"status": "error", "message": "Job not found"}
@@ -99,8 +99,8 @@ def send_daily_digest(user_id: int) -> Dict[str, Any]:
             return {"status": "error", "message": "User not found"}
         
         # Gather stats
-        from app.models.scraping_job import ScrapingJob
-        from app.models.ai_conversation import AIConversation
+        from app.Models.scraping_job import ScrapingJob
+        from app.Models.ai_conversation import AIConversation
         from datetime import datetime, timedelta
         
         today = datetime.utcnow().date()
