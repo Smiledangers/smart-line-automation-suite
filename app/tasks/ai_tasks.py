@@ -12,7 +12,7 @@ from app.Models.ai_conversation import AIConversation
 from app.services.ai_service import ai_service
 
 logger = logging.getLogger(__name__)
-process_line_message = process_ai_message  # Alias for backwards compatibility
+# Alias
 
 # Initialize Celery
 celery_app = Celery(
@@ -126,3 +126,6 @@ def generate_ai_summary(conversation_id: int, user_id: int) -> Dict[str, Any]:
         return {"status": "error", "message": str(e)}
     finally:
         db.close()
+
+# Alias
+process_line_message = process_ai_message
