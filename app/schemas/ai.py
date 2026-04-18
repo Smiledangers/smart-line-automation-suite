@@ -11,11 +11,19 @@ class ConversationBase(BaseModel):
 
 class ConversationCreate(ConversationBase):
     user_id: Optional[int] = None
+    agent_type: Optional[str] = "ai"
+    status: Optional[str] = "active"
+    assigned_agent_id: Optional[int] = None
+    platform: Optional[str] = None
+    platform_user_id: Optional[str] = None
 
 
 class ConversationUpdate(BaseModel):
     title: Optional[str] = None
     is_active: Optional[bool] = None
+    agent_type: Optional[str] = None
+    status: Optional[str] = None
+    assigned_agent_id: Optional[int] = None
 
 
 class ConversationInDB(ConversationBase):
@@ -24,6 +32,11 @@ class ConversationInDB(ConversationBase):
     id: int
     user_id: Optional[int] = None
     is_active: bool
+    agent_type: Optional[str] = "ai"
+    status: Optional[str] = "active"
+    assigned_agent_id: Optional[int] = None
+    platform: Optional[str] = None
+    platform_user_id: Optional[str] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
@@ -34,6 +47,11 @@ class ConversationResponse(ConversationBase):
     id: int
     user_id: Optional[int] = None
     is_active: bool
+    agent_type: Optional[str] = "ai"
+    status: Optional[str] = "active"
+    assigned_agent_id: Optional[int] = None
+    platform: Optional[str] = None
+    platform_user_id: Optional[str] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
