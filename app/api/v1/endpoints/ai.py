@@ -244,7 +244,7 @@ async def ai_health_check() -> dict:
 async def restore_conversation(
     conversation_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_active_superuser),
+    current_user: User = Depends(get_current_superuser),
 ) -> dict:
     """
     Restore a deleted conversation (admin only).
@@ -270,4 +270,4 @@ async def restore_conversation(
 
 
 # Need to import this for the dependency
-from app.core.security import get_current_active_superuser
+from app.core.security import get_current_superuser
