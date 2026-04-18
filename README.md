@@ -73,22 +73,26 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 demo_project/
 ├── app/
-│   ├── api/v1/endpoints/   # API endpoints (line, dashboard, scraping, ai)
+│   ├── api/v1/endpoints/   # API endpoints (line, dashboard, scraping, ai, auth, system, monitoring)
 │   ├── core/               # Core (config, database, security)
-│   ├── models/             # SQLAlchemy models
+│   ├── Models/             # SQLAlchemy models (user, line_user, scraping_job, ai_conversation)
+│   ├── schemas/            # Pydantic schemas
 │   ├── services/           # Business services (line, dashboard, scraping, ai)
-│   ├── tasks/              # Celery tasks
+│   ├── tasks/              # Celery tasks with beat schedule
+│   ├── monitoring/         # Prometheus metrics
 │   └── main.py             # FastAPI entry point
-├── scraper/                # Scraping framework
+├── scraper/                # Scraping framework (Botsaurus)
 ├── alembic/versions/       # Database migrations
 ├── requirements/           # Dependencies
-├── scripts/                # Helper scripts
-├── deploy/                 # Deployment (k8s, helm, cloud)
-├── tests/                  # Test suite
-├── docs/                   # Documentation
+├── scripts/                # Helper scripts (create_superuser, init_db, backup, generate_test_data)
+├── deploy/                 # Deployment (k8s, helm, terraform, cloud)
+├── tests/                  # Test suite (unit + integration)
+├── docs/                   # Documentation (api, architecture, deployment, development, changelog)
+├── .github/workflows/      # GitHub Actions CI/CD
 ├── .env.example
 ├── Dockerfile
 ├── docker-compose.yml
+├── Makefile
 └── pyproject.toml
 ```
 
@@ -99,30 +103,47 @@ demo_project/
 - User management and binding
 - Circuit Breaker protection for external API calls
 - Quick replies and menu interactions
+- Button template messages
+- Reply messages support
 
 ### Backend Dashboard
-- User listing and management
+- User CRUD operations
 - System statistics and monitoring
 - Operation logs and audit trail
+- Real-time stats (user count, LINE users, jobs, AI conversations)
 
 ### Automated Scraping Pipeline
-- Job creation and scheduling
+- Job creation and scheduling (Celery beat)
 - Multi-website scraping support
 - Automatic result storage
 - Error retry and notification
+- Job status tracking (pending, running, completed, failed, cancelled)
 
 ### AI Service
 - LangGraph conversation flows
-- Asynchronous processing for improved response speed
-- Prompt validation mechanism
-- Flexible multi-model support
+- Async database integration
+- Conversation history management
+- Multi-model support (GPT-4, GPT-3.5)
+- Circuit breaker protection
 
 ### Infrastructure
-- Complete Alembic database migrations
+- Complete Alembic database migrations (3 migrations)
 - Redis as Celery broker
 - Comprehensive testing framework (unit + integration)
-- Docker Compose & Kubernetes support
-- GitHub Actions CI/CD
+- Docker Compose & Kubernetes & Helm support
+- GitHub Actions CI/CD pipelines
+- Prometheus metrics and monitoring endpoints
+- Health check, readiness check, startup check
+- Makefile for common commands
+- Database backup/restore scripts
+- Test data generator
+
+### Security
+- JWT authentication with access/refresh tokens
+- Password hashing with bcrypt
+- OAuth2 password flow
+- Role-based access control
+- CORS configuration
 
 ## 🔧 Configuration
 
@@ -142,6 +163,9 @@ pytest tests/integration/
 
 # With coverage
 pytest --cov=app --cov-report=term-missing
+
+# Run specific test file
+pytest tests/unit/test_services.py -v
 ```
 
 ## 📦 Deployment Options
@@ -150,10 +174,34 @@ pytest --cov=app --cov-report=term-missing
 - **Production**: `docker-compose -f docker-compose.prod.yml up -d`
 - **Kubernetes**: `kubectl apply -f deploy/k8s/`
 - **Helm**: `helm install demo-bot ./deploy/helm/demo-bot/`
+- **Terraform**: `cd deploy/terraform && terraform init`
 - **Cloud**: Render.com (`deploy/render.yaml`) or Railway.app (`deploy/railway.json`)
+
+## 🔨 Development Commands (Makefile)
+
+```bash
+make install         # Install dependencies
+make test            # Run tests
+make lint            # Run linters
+make format          # Format code
+make docker-up       # Start Docker
+make migrate         # Run migrations
+make createsuper     # Create superuser
+make seed            # Seed test data
+```
 
 ---
 
+## 📊 Statistics (v1.0.0)
+
+- **Python Files**: 33+
+- **API Endpoints**: 20+
+- **Database Models**: 6
+- **Test Files**: 8+
+- **Migrations**: 3
+- **CI/CD Workflows**: 2
+
 **Project Location**: `C:\Users\user\.openclaw\workspace\demo_project`  
-**Last Updated**: 2026-04-17  
+**Version**: 1.0.0  
+**Last Updated**: 2026-04-18  
 **Maintainer**: Smile Dangerous
