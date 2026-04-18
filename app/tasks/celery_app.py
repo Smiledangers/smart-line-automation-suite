@@ -344,11 +344,12 @@ def _call_line_api(self, user_id: str, message: str) -> str:
         
         # Process message through AI service
         from app.services.ai_service import ai_service
-        result = await ai_service.chat(
+        import asyncio
+        result = asyncio.run(ai_service.chat(
             db, 
             user_id=line_user.user_id or 0, 
             message=message
-        )
+        ))
         
         return result.get("message", "Message processed")
     except Exception as e:
