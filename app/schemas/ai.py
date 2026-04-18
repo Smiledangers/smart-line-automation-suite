@@ -71,6 +71,10 @@ class ChatRequest(BaseModel):
     conversation_id: Optional[int] = None
 
 
+class ConversationHistoryResponse(BaseModel):
+    conversation: ConversationResponse
+    history: List[MessageResponse]
+
 class ChatResponse(BaseModel):
     message: str
     conversation_id: int
