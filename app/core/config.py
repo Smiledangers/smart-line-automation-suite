@@ -59,6 +59,13 @@ class Settings(BaseSettings):
     LINE_CHANNEL_SECRET: str = "your-line-channel-secret"
     LINE_REDIRECT_URI: str = "http://localhost:8000/api/v1/line/callback"
 
+    # Telegram Bot
+    TELEGRAM_BOT_TOKEN: str = "your-telegram-bot-token"
+
+    # WhatsApp
+    WHATSAPP_PHONE_NUMBER_ID: str = ""
+    WHATSAPP_ACCESS_TOKEN: str = ""
+
     # AI / LLM
     OPENAI_API_KEY: str = "your-openai-api-key"
     OPENAI_MODEL: str = "gpt-4"
