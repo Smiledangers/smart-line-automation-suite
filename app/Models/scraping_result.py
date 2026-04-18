@@ -16,7 +16,7 @@ class ScrapingResult(Base):
     url = Column(String(2048), nullable=True)
     title = Column(String(512), nullable=True)
     content = Column(Text, nullable=True)
-    metadata = Column(JSON, nullable=True)
+    result_metadata = Column(JSON, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     # Relationships
