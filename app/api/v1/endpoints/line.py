@@ -74,9 +74,11 @@ async def webhook(
     
     Handles:
     - FollowEvent: User follows the bot
-    - UnfollowEvent: User unfollows the bot
+    - UnfollowEvent: User unfollows the bot  
     - MessageEvent: User sends a message
     - PostbackEvent: User clicks a button/postback
+    
+    Now fully async - processes events without blocking.
     """
     signature = request.headers.get("X-Line-Signature", "")
     body = await request.body()
@@ -85,7 +87,16 @@ async def webhook(
     logger.info(f"Received LINE webhook: {body_str[:100]}...")
 
     try:
-        handler.handle(body_str, signature)
+        # Parse webhook payload manually for async processing
+        import json
+        events = json.loads(body_str).get("events", [])
+        
+        for event in events:
+            # Process each event asynchronously in background
+            background_tasks.add_task(
+                _process_line_event, event, db
+            )
+            
     except InvalidSignatureError:
         logger.warning("Invalid signature received")
         raise HTTPException(status_code=400, detail="Invalid signature")
@@ -94,6 +105,82 @@ async def webhook(
         raise HTTPException(status_code=500, detail="Internal server error")
 
     return WebhookResponse(message="OK")
+
+
+async def _process_line_event(event: dict, db: AsyncSession):
+    """Process LINE event asynchronously."""
+    event_type = event.get("type", "")
+    source = event.get("source", {})
+    user_id = source.get("userId", "")
+    
+    if event_type == "message":
+        message = event.get("message", {})
+        msg_type = message.get("type", "")
+        msg_text = message.get("text", "")
+        reply_token = event.get("replyToken", "")
+        
+        logger.info(f"Async message from {user_id}: {msg_text[:50]}...")
+        
+        # Get or create user
+        await line_service.get_or_create_line_user(db, user_id)
+        
+        # Process message through AI (background task)
+        if msg_text:
+            try:
+                from app.tasks.ai_tasks import process_line_message
+                process_line_message.delay(user_id, msg_text)
+            except Exception as e:
+                logger.error(f"Failed to queue AI processing: {e}")
+        
+        # Send async reply
+        if reply_token:
+            try:
+                line_service.message_service.reply_message(
+                    reply_token,
+                    TextSendMessage(text="收到訊息！正在處理中... 🎯")
+                )
+            except Exception as e:
+                logger.error(f"Failed to send reply: {e}")
+                
+    elif event_type == "follow":
+        logger.info(f"User {user_id} followed")
+        await line_service.get_or_create_line_user(db, user_id)
+        await line_service.update_line_user(db, user_id, {"is_followed": True})
+        
+        reply_token = event.get("replyToken", "")
+        if reply_token:
+            try:
+                line_service.message_service.reply_message(
+                    reply_token,
+                    TextSendMessage(text="您好！歡迎加入 🎉")
+                )
+            except:
+                pass
+                
+    elif event_type == "unfollow":
+        logger.info(f"User {user_id} unfollowed")
+        await line_service.update_line_user(db, user_id, {"is_followed": False})
+        
+    elif event_type == "postback":
+        postback = event.get("postback", {})
+        data = postback.get("data", "")
+        logger.info(f"Postback from {user_id}: {data}")
+        
+        reply_token = event.get("replyToken", "")
+        if reply_token:
+            response = "感謝您的回應！"
+            if "help" in data:
+                response = "需要幫助嗎？請告訴我您的問題。"
+            elif "status" in data:
+                response = "系統狀態：正常運作中 ✅"
+            
+            try:
+                line_service.message_service.reply_message(
+                    reply_token,
+                    TextSendMessage(text=response)
+                )
+            except:
+                pass
 
 
 @router.post("/follow")

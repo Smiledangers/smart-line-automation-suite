@@ -65,6 +65,12 @@ class Settings(BaseSettings):
     # WhatsApp
     WHATSAPP_PHONE_NUMBER_ID: str = ""
     WHATSAPP_ACCESS_TOKEN: str = ""
+    WHATSAPP_VERIFY_TOKEN: str = "your_whatsapp_verify_token"
+
+    # Discord
+    DISCORD_BOT_TOKEN: str = ""
+    DISCORD_PUBLIC_KEY: str = ""
+    DISCORD_APPLICATION_ID: str = ""
 
     # AI / LLM
     OPENAI_API_KEY: str = "your-openai-api-key"

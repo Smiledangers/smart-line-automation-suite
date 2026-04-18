@@ -6,7 +6,7 @@ from __future__ import annotations
 from fastapi import APIRouter
 
 from app.core.config import get_settings
-from app.api.v1.endpoints import line, dashboard, scraping, ai, auth, system, monitoring, api_key, webhook, agent
+from app.api.v1.endpoints import line, dashboard, scraping, ai, auth, system, monitoring, api_key, webhook, agent, whatsapp, discord, telegram
 from app.workflow import router as workflow_router
 
 settings = get_settings()
@@ -26,3 +26,6 @@ api_router.include_router(workflow_router, prefix="/workflow", tags=["workflow"]
 api_router.include_router(api_key.router, prefix="", tags=["api-keys"])
 api_router.include_router(webhook.router, prefix="", tags=["webhooks"])
 api_router.include_router(agent.router, prefix="", tags=["agent"])
+api_router.include_router(telegram.router, prefix="/telegram", tags=["telegram"])
+api_router.include_router(whatsapp.router, prefix="/whatsapp", tags=["whatsapp"])
+api_router.include_router(discord.router, prefix="/discord", tags=["discord"])
