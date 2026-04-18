@@ -2,17 +2,18 @@
 Telegram Bot API endpoints.
 """
 import logging
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status, Body
+from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
 
 from app.services.telegram_service import telegram_service
 from app.services.unified_messaging import unified_message_service, Platform, MessageType
-from app.core.config import get_settings
+from app.core.database import get_db
 
 logger = logging.getLogger(__name__)
-router = APIRouter(prefix=\"/telegram/", tags=[\"telegram/"])
+router = APIRouter(prefix="/telegram/", tags=["telegram"])
 settings = get_settings()
 
 
@@ -20,83 +21,52 @@ class TelegramSendRequest(BaseModel):
     """Request to send Telegram message."""
     chat_id: str
     message: str
-    buttons: list = None
+    buttons: Optional[list] = None
 
 
 class TelegramCallbackRequest(BaseModel):
     """Webhook callback from Telegram."""
     update_id: int
-    message: dict = None
-    callback_query: dict = None
+    message: Optional[dict] = None
+    edited_message: Optional[dict] = None
+    callback_query: Optional[dict] = None
 
 
-@router.post(\"/send\")
-async def send_telegram_message(request: TelegramSendRequest) -> Dict[str, Any]:
-    """
-    Send message to Telegram user.
-    """
+@router.post("/send")
+async def send_telegram_message(
+    request: TelegramSendRequest,
+    db: AsyncSession = Depends(get_db),
+) -> Dict[str, Any]:
+    """Send message to Telegram user."""
     result = await telegram_service.send_message(
-        chat_id=request.chat_id,
-        text=request.message,
-        message_type=\"text\",
-        metadata={\"buttons\": request.buttons} if request.buttons else None
+        request.chat_id,
+        request.message,
+        metadata={"buttons": request.buttons} if request.buttons else None,
     )
     return result
 
 
-@router.post(\"/send_photo\")
-async def send_telegram_photo(
-    chat_id: str = Body(...),
-    photo_url: str = Body(...),
-    caption: str = Body(None)
-) -> Dict[str, Any]:
-    """
-    Send photo to Telegram user.
-    """
-    result = await telegram_service.send_photo(
-        chat_id=chat_id,
-        photo_url=photo_url,
-        caption=caption
-    )
-    return result
-
-
-@router.post(\"/webhook\")
-async def telegram_webhook(request: dict = Body(...)) -> Dict[str, Any]:
-    """
-    Handle Telegram webhook callbacks.
-    """
-    result = await telegram_service.handle_webhook(request)
-    return result
-
-
-@router.get(\"/status\")
-async def telegram_status() -> Dict[str, Any]:
-    """
-    Get Telegram bot status.
-    """
-    return {
-        \"status\": \"active\",
-        \"platform\": \"telegram/",
-        \"configured\": bool(settings.TELEGRAM_BOT_TOKEN != \"your-telegram-bot-token\")
-    }
-
-
-@router.post(\"/broadcast\")
-async def broadcast_to_telegram(
-    chat_ids: list = Body(...),
-    message: str = Body(...)
-) -> Dict[str, Any]:
-    """
-    Broadcast message to multiple Telegram users.
-    """
-    results = []
-    for chat_id in chat_ids:
-        result = await telegram_service.send_message(chat_id, message)
-        results.append(result)
+@router.post("/webhook")
+async def telegram_webhook(
+    request: TelegramCallbackRequest,
+    db: AsyncSession = Depends(get_db),
+) -> Dict[str, str]:
+    """Handle incoming Telegram updates."""
+    if request.message:
+        user_id = str(request.message.get("from", {}).get("id"))
+        text = request.message.get("text")
+        
+        if user_id and text:
+            await telegram_service.handle_incoming_message(db, user_id, text)
     
+    return {"status": "ok"}
+
+
+@router.get("/health")
+async def telegram_health():
+    """Telegram service health check."""
     return {
-        \"status\": \"success\",
-        \"sent\": len(results),
-        \"results\": results
+        "status": "healthy",
+        "platform": "telegram",
+        "configured": bool(settings.TELEGRAM_BOT_TOKEN),
     }
