@@ -13,7 +13,7 @@ from app.Models.user import User
 from app.schemas.ai import ChatRequest, ChatResponse, ConversationResponse, ConversationHistoryResponse
 from app.services.ai_service import ai_service
 from app.services.line_service import line_service
-from app.core.security import get_current_active_user
+from app.core.security import get_current_active_user, get_current_superuser
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
