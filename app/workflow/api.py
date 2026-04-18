@@ -3,11 +3,11 @@ Workflow API endpoints for real-time monitoring.
 """
 import asyncio
 import logging
-from typing import Dict, Any, Event
+from typing import Dict, Any
 
 from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
-from starlette.events import EventSourceResponse
+from sse_starlette import EventSourceResponse
 
 from app.workflow.engine import workflow_engine, WorkflowState, WorkflowStage
 
