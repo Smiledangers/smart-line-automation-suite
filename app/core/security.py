@@ -94,3 +94,6 @@ async def get_current_superuser(
             detail="Not enough permissions"
         )
     return current_user
+
+# Alias for backwards compatibility
+get_current_active_superuser = get_current_superuser
