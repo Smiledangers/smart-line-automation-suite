@@ -10,6 +10,7 @@ from pydantic import BaseModel
 
 from app.services.telegram_service import telegram_service
 from app.services.unified_messaging import unified_message_service, Platform, MessageType
+from app.core.config import get_settings
 from app.core.database import get_db
 
 logger = logging.getLogger(__name__)
