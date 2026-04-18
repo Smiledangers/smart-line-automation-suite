@@ -9,7 +9,7 @@ from openai import AsyncOpenAI
 
 from app.core.config import get_settings
 from app.Models.ai_conversation import AIConversation, AIMessage
-from app.utils.circuit_breaker import circuit_breaker
+from app.utils.circuit_breaker import llm_invoke_circuit_breaker
 
 settings = get_settings()
 
