@@ -418,15 +418,16 @@ def _call_ai(self, user_id: int, message: str, conversation_id: int) -> str:
     from app.services.ai_service import ai_service
     from app.core.database import SessionLocal
     from datetime import datetime
+    import asyncio
     
     db = SessionLocal()
     try:
-        result = await ai_service.chat(
+        result = asyncio.run(ai_service.chat(
             db,
             user_id=user_id,
             message=message,
             conversation_id=conversation_id if conversation_id > 0 else None
-        )
+        ))
         return result.get("message", "AI response generated")
     except Exception as e:
         logger.error(f"Error calling AI service: {e}")
