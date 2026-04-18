@@ -266,8 +266,8 @@ make seed          # Seed test data
 
 ## 📊 Statistics
 
-- **Python Files**: 45+
-- **API Endpoints**: 30+
+- **Python Files**: 50+
+- **API Endpoints**: 40+
 - **Database Models**: 8
 - **Test Files**: 10+
 - **Migrations**: 6
@@ -276,6 +276,6 @@ make seed          # Seed test data
 
 ---
 
-**Version**: 1.1.0  
+**Version**: 1.2.0  
 **Last Updated**: 2026-04-18  
 **Maintainer**: Smile Dangerous
