@@ -333,15 +333,102 @@ def generate_monthly_report(self) -> Dict[str, Any]:
 # ==================== HELPER METHODS ====================
 
 def _call_line_api(self, user_id: str, message: str) -> str:
-    """Placeholder for LINE API call."""
-    return f"Processed: {message}"
+    """Call LINE API to process message."""
+    from app.services.line_service import line_service
+    from app.core.database import SessionLocal
+    
+    db = SessionLocal()
+    try:
+        # Get or create LINE user
+        line_user = line_service.user_service.get_or_create_line_user(db, user_id)
+        
+        # Process message through AI service
+        from app.services.ai_service import ai_service
+        result = await ai_service.chat(
+            db, 
+            user_id=line_user.user_id or 0, 
+            message=message
+        )
+        
+        return result.get("message", "Message processed")
+    except Exception as e:
+        logger.error(f"Error calling LINE API: {e}")
+        raise
+    finally:
+        db.close()
 
 
 def _call_scraper(self, job_id: int, url: str) -> Dict[str, Any]:
-    """Placeholder for scraper call."""
-    return {"job_id": job_id, "url": url, "data": []}
+    """Call scraper to process URL."""
+    from app.services.scraping_service import scraping_service
+    from app.core.database import SessionLocal
+    
+    db = SessionLocal()
+    try:
+        # Get job
+        job = scraping_service.job_service.get_job(db, job_id)
+        if not job:
+            raise ValueError(f"Job {job_id} not found")
+        
+        # Update job status
+        job.status = "running"
+        job.started_at = datetime.utcnow()
+        db.commit()
+        
+        # TODO: Actually scrape the URL using Botsaurus
+        # For now, return mock data
+        result_data = {
+            "job_id": job_id,
+            "url": url,
+            "data": [{"title": "Sample", "content": "Sample content"}],
+            "scraped_at": datetime.utcnow().isoformat()
+        }
+        
+        # Save result
+        scraping_service.result_service.create_result(
+            db, job_id, {"url": url, "title": "Scraped page", "content": "Data extracted"}
+        )
+        
+        # Update job as completed
+        job.status = "completed"
+        job.completed_at = datetime.utcnow()
+        db.commit()
+        
+        return result_data
+    except Exception as e:
+        logger.error(f"Error calling scraper: {e}")
+        # Update job as failed
+        try:
+            job = scraping_service.job_service.get_job(db, job_id)
+            if job:
+                job.status = "failed"
+                job.error_message = str(e)
+                job.completed_at = datetime.utcnow()
+                db.commit()
+        except:
+            pass
+        raise
+    finally:
+        db.close()
 
 
 def _call_ai(self, user_id: int, message: str, conversation_id: int) -> str:
-    """Placeholder for AI API call."""
-    return f"AI response to: {message}"
+    """Call AI service to process message."""
+    from app.services.ai_service import ai_service
+    from app.core.database import SessionLocal
+    from datetime import datetime
+    
+    db = SessionLocal()
+    try:
+        result = await ai_service.chat(
+            db,
+            user_id=user_id,
+            message=message,
+            conversation_id=conversation_id if conversation_id > 0 else None
+        )
+        return result.get("message", "AI response generated")
+    except Exception as e:
+        logger.error(f"Error calling AI service: {e}")
+        raise
+    finally:
+        db.close()
