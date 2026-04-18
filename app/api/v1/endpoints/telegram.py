@@ -12,7 +12,7 @@ from app.services.unified_messaging import unified_message_service, Platform, Me
 from app.core.config import get_settings
 
 logger = logging.getLogger(__name__)
-router = APIRouter(prefix=\"/telegram\", tags=[\"telegram\"])
+router = APIRouter(prefix=\"/telegram/", tags=[\"telegram/"])
 settings = get_settings()
 
 
@@ -77,7 +77,7 @@ async def telegram_status() -> Dict[str, Any]:
     """
     return {
         \"status\": \"active\",
-        \"platform\": \"telegram\",
+        \"platform\": \"telegram/",
         \"configured\": bool(settings.TELEGRAM_BOT_TOKEN != \"your-telegram-bot-token\")
     }
 
