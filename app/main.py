@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import uvicorn
 from app.core.config import settings
+from app.middleware.security import RateLimitMiddleware, SecurityHeadersMiddleware
 
 # Configure structured logging
 logging.basicConfig(
@@ -48,6 +49,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+# Security middleware
+app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(RateLimitMiddleware, requests_per_minute=60)
 app.middleware("http")(request_id_middleware)
 
 # Health check endpoints
