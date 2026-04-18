@@ -1,70 +1,72 @@
-# Smart LINE Bot + Dashboard + Scraper Pipeline
+# Smart LINE Bot + Dashboard + Automation Suite
 
 ## 🎯 Project Overview
 
-This is a complete intelligent LINE Bot system that combines a backend dashboard, automated scraping pipeline, and AI services. The project uses modern Python tech stack to provide production-ready features and deployment options.
+A complete **multi-platform chatbot system** with unified messaging, AI services, and automation pipelines. Supports LINE, Telegram, WhatsApp, and Discord with a central dashboard for customer service management.
+
+**Use cases:**
+- Multi-platform customer service bot
+- AI-powered automated responses
+- Web widget for website chat
+- Customer service handoff (AI ↔ Human)
+- Third-party API integration
+- Scheduled scraping jobs
 
 ## 🧩 System Architecture
 
 ### Core Components
-1. **LINE Bot Integration** - Using LINE Messaging API for message sending/receiving
-2. **Backend Dashboard** - Management interface for user statistics and system monitoring
-3. **Automated Scraping Pipeline** - Schedule-based scraping system using Botsaurus
-4. **AI Service Integration** - LangGraph architecture for asynchronous AI processing
-5. **Celery Task Queue** - Handles time-consuming operations (scraping, AI computation, notification sending)
-6. **PostgreSQL + Redis** - Primary database and caching layer
+1. **Unified Messaging** - One API, all platforms
+2. **Multi-Platform Support** - LINE, Telegram, WhatsApp, Discord
+3. **AI Service** - LangGraph + OpenAI/LLaMA
+4. **Web Widget** - Embedded chat for websites
+5. **Agent Dashboard** - Human-in-the-loop customer service
+6. **Scraping Pipeline** - Celery-powered automation
+7. **Webhook System** - External notifications
+8. **API Keys** - Third-party access management
 
 ## 🚀 Quick Start
 
-### Using Docker Compose (Recommended)
+### Using Docker Compose
 
 ```bash
 # 1. Copy environment template
 cp .env.example .env
 
-# 2. Edit .env file and fill in required keys:
-#    LINE_CHANNEL_ACCESS_TOKEN, LINE_CHANNEL_SECRET, OPENAI_API_KEY, etc.
+# 2. Edit .env with your keys
+# Required: LINE_CHANNEL_ACCESS_TOKEN, OPENAI_API_KEY, DATABASE_URL
 
-# 3. Build and start all services
+# 3. Build and start
 docker-compose up -d --build
 
-# 4. Run database migrations
+# 4. Run migrations
 docker-compose exec web alembic upgrade head
 
-# 5. Create admin account
+# 5. Create admin
 docker-compose exec web python scripts/create_superuser.py
 
-# 6. Access the application
-#    API Docs: http://localhost:8000/docs
-#    Health Check: http://localhost:8000/health
+# 6. Access
+# API Docs: http://localhost:8000/docs
+# Health: http://localhost:8000/health
 ```
 
-### Local Development (No Docker)
+### Local Development
 
 ```bash
-# 1. Create Python virtual environment
+# 1. Create venv
 python -m venv venv
-# Windows: venv\Scripts\activate
-# Linux/Mac: source venv/bin/activate
+source venv/bin/activate  # or venv\Scripts\activate
 
-# 2. Install dependencies
+# 2. Install
 pip install -r requirements/base.txt
-pip install -r requirements/dev.txt  # Includes testing tools
+pip install -r requirements/dev.txt
 
-# 3. Set environment variables
+# 3. Setup
 cp .env.example .env
-# Edit .env to fill in required keys
-
-# 4. Initialize database
 python scripts/init_db.py
-
-# 5. Run migrations
 alembic upgrade head
-
-# 6. Create superuser
 python scripts/create_superuser.py
 
-# 7. Start application
+# 4. Run
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
@@ -73,135 +75,196 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 demo_project/
 ├── app/
-│   ├── api/v1/endpoints/   # API endpoints (line, dashboard, scraping, ai, auth, system, monitoring)
-│   ├── core/               # Core (config, database, security)
-│   ├── Models/             # SQLAlchemy models (user, line_user, scraping_job, ai_conversation)
+│   ├── api/v1/endpoints/   # API endpoints
+│   ├── core/               # Config, database, security
+│   ├── Models/             # SQLAlchemy models
 │   ├── schemas/            # Pydantic schemas
-│   ├── services/           # Business services (line, dashboard, scraping, ai)
-│   ├── tasks/              # Celery tasks with beat schedule
-│   ├── monitoring/         # Prometheus metrics
-│   └── main.py             # FastAPI entry point
-├── scraper/                # Scraping framework (Botsaurus)
-├── alembic/versions/       # Database migrations
-├── requirements/           # Dependencies
-├── scripts/                # Helper scripts (create_superuser, init_db, backup, generate_test_data)
-├── deploy/                 # Deployment (k8s, helm, terraform, cloud)
-├── tests/                  # Test suite (unit + integration)
-├── docs/                   # Documentation (api, architecture, deployment, development, changelog)
-├── .github/workflows/      # GitHub Actions CI/CD
+│   ├── services/          # Business logic
+│   ├── tasks/             # Celery tasks
+│   ├── middleware/       # Custom middleware
+│   └── main.py            # FastAPI entry
+├── alembic/versions/      # Migrations
+├── requirements/          # Dependencies
+├── scripts/               # Helper scripts
+├── deploy/                # Deployment configs
+├── tests/                 # Tests
+├── docs/                  # Documentation
+├── .github/workflows/    # CI/CD
 ├── .env.example
-├── Dockerfile
 ├── docker-compose.yml
-├── Makefile
-└── pyproject.toml
+├── Dockerfile
+└── Makefile
 ```
 
-## ⭐ Key Features
+## ⭐ Features
 
-### LINE Bot
-- Message receiving and replying
-- User management and binding
-- Circuit Breaker protection for external API calls
-- Quick replies and menu interactions
-- Button template messages
-- Reply messages support
+### Multi-Platform Messaging
+| Platform | Webhook | Send | Status |
+|----------|--------|------|-------|
+| LINE | ✅ | ✅ | ✅ |
+| Telegram | ✅ | ✅ | ✅ |
+| WhatsApp | ✅ | ✅ | ✅ |
+| Discord | ✅ | ✅ | ✅ |
 
-### Backend Dashboard
-- User CRUD operations
-- System statistics and monitoring
-- Operation logs and audit trail
-- Real-time stats (user count, LINE users, jobs, AI conversations)
+### Bot Capabilities
+- Message receiving/replying
+- User management
+- Rich menus & buttons
+- Quick replies
+- Flex messages
+- WebSocket chat widget
 
-### Automated Scraping Pipeline
-- Job creation and scheduling (Celery beat)
-- Multi-website scraping support
-- Automatic result storage
-- Error retry and notification
-- Job status tracking (pending, running, completed, failed, cancelled)
+### Customer Service
+- AI ↔ Human handoff
+- Conversation assignment
+- Pending queue management
+- Agent dashboard API
+- Real-time stats
+
+### Third-Party API
+- API Key management
+- Permission control
+- Rate limiting
+- Usage tracking
+
+### Webhooks
+- Event triggers (message sent/received, conversation start/end)
+- External notifications
+- Signature verification
 
 ### AI Service
-- LangGraph conversation flows
-- Async database integration
-- Conversation history management
-- Multi-model support (GPT-4, GPT-3.5)
+- LangGraph conversations
+- Multi-model support (GPT-4, GPT-3.5, local LLaMA)
 - Circuit breaker protection
+- Async processing
 
-### Infrastructure
-- Complete Alembic database migrations (3 migrations)
-- Redis as Celery broker
-- Comprehensive testing framework (unit + integration)
-- Docker Compose & Kubernetes & Helm support
-- GitHub Actions CI/CD pipelines
-- Prometheus metrics and monitoring endpoints
-- Health check, readiness check, startup check
-- Makefile for common commands
-- Database backup/restore scripts
-- Test data generator
+### Scraping Pipeline
+- Job scheduling (Celery beat)
+- Multi-website support
+- Automatic retry
+- Status tracking
 
 ### Security
-- JWT authentication with access/refresh tokens
-- Password hashing with bcrypt
-- OAuth2 password flow
+- JWT authentication
+- Password hashing (bcrypt)
 - Role-based access control
 - CORS configuration
+- Rate limiting
+- Security headers
+
+### Infrastructure
+- PostgreSQL + Redis
+- Docker/K8s/Helm/Terraform
+- GitHub Actions CI/CD
+- Prometheus metrics
+- Health checks
+- Database migrations
 
 ## 🔧 Configuration
 
-All settings can be adjusted in `.env`, refer to `.env.example`:
-- **Required**: LINE keys, OPENAI_API_KEY, DATABASE_URL, REDIS_URL, SECRET_KEY
-- **Optional**: SMTP settings, Sentry, Prometheus, scraping parameters
+### Required Keys
+```bash
+# Platform tokens
+LINE_CHANNEL_ACCESS_TOKEN=xxx
+LINE_CHANNEL_SECRET=xxx
+TELEGRAM_BOT_TOKEN=xxx
+WHATSAPP_PHONE_NUMBER_ID=xxx
+WHATSAPP_ACCESS_TOKEN=xxx
+DISCORD_BOT_TOKEN=xxx
+
+# AI
+OPENAI_API_KEY=xxx
+
+# Database
+DATABASE_URL=postgresql+asyncpg://...
+REDIS_URL=redis://...
+
+# Security
+SECRET_KEY=your-secret-key
+```
+
+### Optional Keys
+```bash
+# Email notifications
+SMTP_HOST=smtp.gmail.com
+SMTP_USER=xxx
+SMTP_PASSWORD=xxx
+
+# Monitoring
+SENTRY_DNS=xxx
+PROMETHEUS_PORT=9090
+```
+
+## 📡 API Endpoints
+
+### Core
+| Endpoint | Description |
+|----------|-------------|
+| `/api/v1/line/webhook` | LINE webhook |
+| `/api/v1/telegram/webhook` | Telegram webhook |
+| `/api/v1/whatsapp/webhook` | WhatsApp webhook |
+| `/api/v1/discord/webhook` | Discord webhook |
+| `/api/v1/ai/chat` | AI chat |
+| `/api/v1/widget/ws/{session_id}` | WebSocket chat |
+
+### Management
+| Endpoint | Description |
+|----------|-------------|
+| `/api/v1/dashboard/users` | User management |
+| `/api/v1/api-keys` | API key CRUD |
+| `/api/v1/webhooks` | Webhook CRUD |
+| `/api/v1/agent/conversations` | Agent dashboard |
+| `/api/v1/agent/handoff` | AI ↔ Human transfer |
+| `/api/v1/scraping/jobs` | Scraping jobs |
 
 ## 🧪 Testing
 
 ```bash
-# Run all tests
+# All tests
 pytest
 
-# Run by category
+# By category
 pytest tests/unit/
 pytest tests/integration/
 
 # With coverage
 pytest --cov=app --cov-report=term-missing
-
-# Run specific test file
-pytest tests/unit/test_services.py -v
 ```
 
-## 📦 Deployment Options
+## 📦 Deployment
 
-- **Development**: `docker-compose up -d`
-- **Production**: `docker-compose -f docker-compose.prod.yml up -d`
-- **Kubernetes**: `kubectl apply -f deploy/k8s/`
-- **Helm**: `helm install demo-bot ./deploy/helm/demo-bot/`
-- **Terraform**: `cd deploy/terraform && terraform init`
-- **Cloud**: Render.com (`deploy/render.yaml`) or Railway.app (`deploy/railway.json`)
+| Method | Command |
+|--------|---------|
+| Docker | `docker-compose up -d` |
+| Production | `docker-compose -f docker-compose.prod.yml up -d` |
+| K8s | `kubectl apply -f deploy/k8s/` |
+| Helm | `helm install demo-bot ./deploy/helm/demo-bot/` |
 
-## 🔨 Development Commands (Makefile)
+## 🔨 Makefile Commands
 
 ```bash
 make install         # Install dependencies
 make test            # Run tests
 make lint            # Run linters
-make format          # Format code
+make format         # Format code
 make docker-up       # Start Docker
-make migrate         # Run migrations
-make createsuper     # Create superuser
-make seed            # Seed test data
+make migrate        # Run migrations
+make createsuper    # Create admin
+make seed          # Seed test data
 ```
+
+## 📊 Statistics
+
+- **Python Files**: 45+
+- **API Endpoints**: 30+
+- **Database Models**: 8
+- **Test Files**: 10+
+- **Migrations**: 6
+- **CI/CD Workflows**: 2
+- **Supported Platforms**: 4
 
 ---
 
-## 📊 Statistics (v1.0.0)
-
-- **Python Files**: 33+
-- **API Endpoints**: 20+
-- **Database Models**: 6
-- **Test Files**: 8+
-- **Migrations**: 3
-- **CI/CD Workflows**: 2
-
-**Project Location**: `C:\Users\user\.openclaw\workspace\demo_project`  
-**Version**: 1.0.0  
+**Version**: 1.1.0  
 **Last Updated**: 2026-04-18  
 **Maintainer**: Smile Dangerous
