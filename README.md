@@ -217,6 +217,17 @@ PROMETHEUS_PORT=9090
 | `/api/v1/agent/handoff` | AI ↔ Human transfer |
 | `/api/v1/scraping/jobs` | Scraping jobs |
 
+### Analytics & Files
+| Endpoint | Description |
+|----------|-------------|
+| `/api/v1/analytics/overview` | System overview |
+| `/api/v1/analytics/messages` | Message stats |
+| `/api/v1/analytics/platforms` | Platform breakdown |
+| `/api/v1/analytics/api-usage` | API key usage |
+| `/api/v1/analytics/scraping` | Scraping stats |
+| `/api/v1/files/upload` | File upload |
+| `/api/v1/files/list` | List files |
+
 ## 🧪 Testing
 
 ```bash
